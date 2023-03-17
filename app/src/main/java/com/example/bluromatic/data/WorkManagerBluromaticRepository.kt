@@ -19,6 +19,7 @@ package com.example.bluromatic.data
 import android.content.Context
 import android.net.Uri
 import androidx.work.*
+import com.example.bluromatic.IMAGE_MANIPULATION_WORK_NAME
 import com.example.bluromatic.KEY_BLUR_LEVEL
 import com.example.bluromatic.KEY_IMAGE_URI
 import com.example.bluromatic.getImageUri
@@ -40,8 +41,12 @@ class WorkManagerBluromaticRepository(context: Context) : BluromaticRepository {
      */
     override fun applyBlur(blurLevel: Int) {
         // Add WorkRequest to Cleanup temporary images
-        var continuation = workManager.beginWith(OneTimeWorkRequest.Companion.from(CleanupWorker::class.java))
-
+//        var continuation = workManager.beginWith(OneTimeWorkRequest.Companion.from(CleanupWorker::class.java))
+        var continuation = workManager.beginUniqueWork(
+            IMAGE_MANIPULATION_WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequest.Companion.from(CleanupWorker::class.java),
+        )
         // Add WorkRequest to blur the image
         // OneTimeWorkRequest is a work request that only executes once.
         val blurBuilder = OneTimeWorkRequestBuilder<BlurWorker>()
@@ -56,7 +61,6 @@ class WorkManagerBluromaticRepository(context: Context) : BluromaticRepository {
         continuation.enqueue()
 
     }
-
 
     /**
      * Cancel any ongoing WorkRequests
@@ -73,6 +77,4 @@ class WorkManagerBluromaticRepository(context: Context) : BluromaticRepository {
         builder.putString(KEY_IMAGE_URI, imageUri.toString()).putInt(KEY_BLUR_LEVEL, blurLevel)
         return builder.build()
     }
-
-
 }
